@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>MB Accounting Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+:root{--bg:#f3f4f1;--surface:#fff;--ink:#1b2430;--muted:#5d6874;--line:#d9ddd6;--chip:#e8ebe5;--accent:#e0a100;--accent-ink:#1b2430;--danger:#c2412d;--warn:#b7791f;
+--display:"Archivo",system-ui,sans-serif;--body:"IBM Plex Sans",system-ui,sans-serif;--mono:"IBM Plex Mono",ui-monospace,monospace;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#12171d;--surface:#1b222b;--ink:#e7eaee;--muted:#9aa5b1;--line:#2c3540;--chip:#252e39;--accent:#f2b51c;--accent-ink:#12171d;--danger:#ef7a66;--warn:#e3a84c;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--body);padding:20px 16px 48px}
+.wrap{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+[hidden]{display:none!important}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;border-bottom:3px solid var(--ink);padding-bottom:12px}
+h1{font:800 clamp(22px,4vw,32px)/1.1 var(--display);margin:0}
+h1 span{background:var(--accent);color:var(--accent-ink);padding:0 6px}
+.sub{color:var(--muted);font-size:13px;margin:4px 0 0}
+button,input,select,textarea{font:inherit;color:inherit}
+.btn{border:1px solid var(--ink);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:4px;cursor:pointer;font-weight:600}
+.btn.ghost{background:transparent;color:var(--ink)}
+.btn.danger{background:transparent;color:var(--danger);border-color:var(--danger)}
+.btn:disabled{opacity:.5;cursor:default}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.login{max-width:380px;margin:12vh auto 0;background:var(--surface);border:1px solid var(--line);border-top:6px solid var(--accent);border-radius:6px;padding:24px;display:flex;flex-direction:column;gap:14px}
+.login h2{margin:0;font:800 22px var(--display)}
+label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+input,select,textarea{border:1px solid var(--line);border-radius:4px;padding:8px;background:var(--bg);color:var(--ink);font-size:14px;text-transform:none;letter-spacing:0;width:100%}
+.err{color:var(--danger);font-size:13px;min-height:1em}
+.home{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.tile{background:var(--surface);border:1px solid var(--line);border-top:6px solid var(--c);border-radius:6px;padding:18px;display:flex;flex-direction:column;gap:12px;cursor:pointer;text-align:left;width:100%}
+.tile h3{margin:0;font:800 20px/1.2 var(--display)}
+.trucks{display:flex;align-items:baseline;gap:6px;color:var(--muted);font-size:13px}
+.trucks b{font:600 26px var(--mono);color:var(--ink)}
+.go{font-weight:600;font-size:13px}
+.crumb{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.crumb h2{margin:0;font:800 clamp(20px,3.5vw,28px)/1.1 var(--display);display:flex;align-items:center;gap:10px}
+.mono{font-family:var(--mono);font-size:13px;color:var(--muted)}
+.dot{width:12px;height:12px;border-radius:50%;display:inline-block;background:var(--c)}
+.board{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-items:start}
+@media (max-width:960px){.board{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:560px){.board{grid-template-columns:1fr}}
+.col{background:var(--chip);border-radius:6px;padding:10px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.col h3{font:600 13px var(--body);text-transform:uppercase;letter-spacing:.07em;margin:0 0 2px;display:flex;justify-content:space-between;color:var(--muted)}
+.col.drop{outline:2px dashed var(--accent)}
+.card{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--c);border-radius:4px;padding:10px;display:flex;flex-direction:column;gap:6px;cursor:pointer;min-width:0}
+.card .t{font-weight:600;line-height:1.35;overflow-wrap:anywhere}
+.meta{display:flex;flex-wrap:wrap;gap:6px;font-size:12px;color:var(--muted);align-items:center}
+.tag{background:var(--chip);padding:1px 7px;border-radius:3px;font-size:11.5px;font-weight:500;color:var(--ink)}
+.due{font-family:var(--mono);font-size:12px}.due.over{color:var(--danger);font-weight:600}.due.soon{color:var(--warn);font-weight:600}
+.card select{font-size:12px;padding:3px 4px}
+.empty{color:var(--muted);font-size:13px;padding:8px 2px}
+.acct{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;background:var(--surface);border:1px solid var(--line);border-left:6px solid var(--c);border-radius:4px;padding:12px}
+.modal{position:fixed;inset:0;background:rgb(0 0 0/.45);display:flex;align-items:center;justify-content:center;padding:16px;z-index:10}
+.panel{background:var(--surface);border-radius:6px;padding:18px;width:min(520px,100%);display:flex;flex-direction:column;gap:12px;max-height:90vh;overflow:auto}
+.panel h3{margin:0;font:800 18px var(--display)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media (max-width:480px){.row2{grid-template-columns:1fr}}
+.actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between}.actions div{display:flex;gap:8px}
+.notice{background:var(--surface);border:1px solid var(--line);padding:12px;border-radius:4px;color:var(--danger)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <form class="login" id="loginView" hidden>
+    <h2>MB Accounting</h2>
+    <p class="sub" style="margin:0">Kirish faqat egasi uchun</p>
+    <label>Email<input id="email" type="email" autocomplete="username" required></label>
+    <label>Parol<input id="password" type="password" autocomplete="current-password" required></label>
+    <div class="err" id="loginErr"></div>
+    <button class="btn" type="submit" id="loginBtn">Kirish</button>
+  </form>
+
+  <div id="appView" hidden style="display:flex;flex-direction:column;gap:20px">
+    <header>
+      <div><h1><span>MB</span> Accounting Board</h1><p class="sub">Mr Benefit Truck Accounting</p></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn" type="button" id="addBtn" hidden>+ Yangi vazifa</button>
+        <button class="btn ghost" type="button" id="logoutBtn">Chiqish</button>
+      </div>
+    </header>
+    <div class="notice" id="notice" hidden></div>
+    <section id="homeView"><div class="home" id="home"></div></section>
+    <section id="coView" hidden style="display:flex;flex-direction:column;gap:16px">
+      <div class="crumb"><button class="btn ghost" type="button" id="backBtn">← Kompaniyalar</button><h2 id="coName"></h2><span class="mono" id="coTrucks"></span></div>
+      <div class="board" id="board"></div>
+      <div class="acct" id="acct"></div>
+    </section>
+  </div>
+</div>
+
+<div class="modal" id="modal" hidden>
+  <form class="panel" id="form">
+    <h3 id="formTitle">Yangi vazifa</h3>
+    <label>Vazifa<input id="f-title" required></label>
+    <div class="row2"><label>Kompaniya<select id="f-company"></select></label><label>Xizmat<select id="f-service"></select></label></div>
+    <div class="row2"><label>Muddat<input id="f-due" type="date"></label><label>Takrorlanish<select id="f-freq"></select></label></div>
+    <label>Holat<select id="f-status"></select></label>
+    <label>Izoh<textarea id="f-note" rows="3"></textarea></label>
+    <div class="actions"><div><button type="button" class="btn danger" id="delBtn" hidden>O'chirish</button></div>
+      <div><button type="button" class="btn ghost" id="cancelBtn">Bekor qilish</button><button type="submit" class="btn">Saqlash</button></div></div>
+  </form>
+</div>
+
+<script>
+const SUPABASE_URL='https://ghexjgkqqkwerhiupcaj.supabase.co';
+const SUPABASE_KEY='sb_publishable_GpZ-XbyPLgLZqNnU8M380Q_0DkFrPTX';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+const STATUSES=[{k:'todo',l:'Rejada'},{k:'doing',l:'Jarayonda'},{k:'waiting',l:'Mijozdan kutilmoqda'},{k:'done',l:'Bajarildi'}];
+const SERVICES=['Driver settlement','Bookkeeping','Payroll','Invoicing / Factoring','IFTA','Form 941','Form 2290','IRP','UCR','1099','Soliq hisobotlari','Boshqa'];
+const FREQS=[{k:'once',l:'Bir martalik'},{k:'weekly',l:'Har hafta'},{k:'biweekly',l:'Har 2 hafta'},{k:'monthly',l:'Har oy'},{k:'quarterly',l:'Har chorak'},{k:'yearly',l:'Har yil'}];
+let companies=[],tasks=[],current=null,editing=null;
+const $=s=>document.querySelector(s);
+const pad=n=>String(n).padStart(2,'0');
+const iso=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const today=iso(new Date());
+const parse=s=>{const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
+const fmt=s=>s?parse(s).toLocaleDateString('en-US',{month:'short',day:'numeric'}):'';
+const daysTo=s=>Math.round((parse(s)-parse(today))/864e5);
+function nextDue(s,f){const d=parse(s||today);
+  if(f==='weekly')d.setDate(d.getDate()+7);else if(f==='biweekly')d.setDate(d.getDate()+14);else if(f==='monthly')d.setMonth(d.getMonth()+1);
+  else if(f==='quarterly')d.setMonth(d.getMonth()+3);else if(f==='yearly')d.setFullYear(d.getFullYear()+1);else return null;return iso(d)}
+function esc(s){const d=document.createElement('div');d.textContent=s??'';return d.innerHTML}
+const co=id=>companies.find(c=>c.id===id)||{name:id,color:'#888'};
+function fill(el,items){el.innerHTML=items.map(i=>typeof i==='string'?`<option>${esc(i)}</option>`:`<option value="${esc(i.k)}">${esc(i.l)}</option>`).join('')}
+fill($('#f-service'),SERVICES);fill($('#f-freq'),FREQS);fill($('#f-status'),STATUSES);
+function notice(m){const n=$('#notice');n.textContent=m;n.hidden=false;setTimeout(()=>n.hidden=true,7000)}
+
+async function load(){
+  const [c,t]=await Promise.all([sb.from('companies').select('*').order('sort_order'),sb.from('tasks').select('*')]);
+  if(c.error||t.error){notice('Ma\'lumot yuklanmadi: '+(c.error||t.error).message);return}
+  companies=c.data;tasks=t.data;render();
+}
+function render(){
+  try{const h=location.hash.slice(1);current=h&&companies.find(c=>c.id===h)?h:null}catch{current=null}
+  $('#homeView').hidden=!!current;$('#coView').hidden=!current;$('#addBtn').hidden=!current;
+  if(!current){
+    $('#home').innerHTML=companies.length?companies.map(c=>`<button class="tile" type="button" data-go="${esc(c.id)}" style="--c:${esc(c.color||'#888')}">
+      <h3>${esc(c.name)}</h3><div class="trucks"><b>${c.trucks??'—'}</b><span>Active trucks</span></div><span class="go">Ichiga kirish →</span></button>`).join('')
+      :'<div class="empty">Hali kompaniya yo\'q.</div>';
+    return}
+  const c=co(current);
+  $('#coView').style.setProperty('--c',c.color||'#888');
+  $('#coName').innerHTML=`<span class="dot"></span>${esc(c.name)}`;
+  $('#coTrucks').textContent=(c.trucks??'—')+' active trucks';
+  const vis=tasks.filter(t=>t.company_id===current);
+  $('#board').innerHTML=STATUSES.map(s=>{const list=vis.filter(t=>t.status===s.k).sort((a,b)=>(a.due||'9')<(b.due||'9')?-1:1);
+    const shown=s.k==='done'?list.slice(-15).reverse():list;
+    return `<section class="col" data-s="${s.k}"><h3>${s.l}<span class="mono">${list.length}</span></h3>${shown.length?shown.map(card).join(''):'<div class="empty">Bo\'sh</div>'}</section>`}).join('');
+  const ae=document.activeElement;if(!(ae&&ae.closest&&ae.closest('#acct')))
+  $('#acct').innerHTML=`<label>Active trucks<input type="number" min="0" data-k="trucks" value="${c.trucks??''}"></label>
+    <label>Google akkaunt<input data-k="google" value="${esc(c.google||'')}"></label>
+    <label>Telegram<input data-k="telegram" value="${esc(c.telegram||'')}"></label>
+    <label style="grid-column:1/-1">Izoh<textarea rows="3" data-k="note">${esc(c.note||'')}</textarea></label>`;
+}
+function card(t){const c=co(t.company_id);let dc='';if(t.due&&t.status!=='done'){const d=daysTo(t.due);dc=d<0?'over':d<=3?'soon':''}
+  const f=FREQS.find(x=>x.k===t.freq);
+  return `<article class="card" tabindex="0" draggable="true" data-id="${t.id}" style="--c:${esc(c.color||'#888')}">
+    <div class="t">${esc(t.title)}</div>
+    <div class="meta"><span class="tag">${esc(t.service||'')}</span>${f&&f.k!=='once'?`<span>${f.l}</span>`:''}<span class="due ${dc}">${t.due?(dc==='over'?'Kechikdi · ':'')+fmt(t.due):''}</span></div>
+    ${t.note?`<div class="meta">${esc(t.note)}</div>`:''}
+    <select data-st="${t.id}" aria-label="Holat">${STATUSES.map(s=>`<option value="${s.k}" ${s.k===t.status?'selected':''}>${s.l}</option>`).join('')}</select></article>`}
+
+async function setStatus(id,status){const t=tasks.find(x=>x.id===id);if(!t||t.status===status)return;
+  const {error}=await sb.from('tasks').update({status,done_at:status==='done'?today:null}).eq('id',id);
+  if(error)return notice('Saqlanmadi: '+error.message);
+  if(status==='done'&&t.freq&&t.freq!=='once'){await sb.from('tasks').insert({company_id:t.company_id,title:t.title,service:t.service,freq:t.freq,due:nextDue(t.due,t.freq),status:'todo',note:t.note})}
+  load()}
+
+document.addEventListener('change',async e=>{
+  const s=e.target.closest('[data-st]');if(s)return setStatus(s.dataset.st,s.value);
+  const a=e.target.closest('#acct [data-k]');if(a&&current){const k=a.dataset.k;const v=k==='trucks'?(a.value===''?null:Number(a.value)):a.value;
+    const {error}=await sb.from('companies').update({[k]:v}).eq('id',current);if(error)notice('Saqlanmadi: '+error.message);else{co(current)[k]=v}}
+});
+document.addEventListener('click',e=>{
+  const g=e.target.closest('[data-go]');if(g){location.hash=g.dataset.go;return}
+  if(e.target.closest('select'))return;
+  const c=e.target.closest('.card');if(c)openForm(tasks.find(t=>t.id===c.dataset.id));
+});
+window.addEventListener('hashchange',()=>{render();window.scrollTo(0,0)});
+document.addEventListener('dragstart',e=>{const c=e.target.closest?.('.card');if(c)e.dataTransfer.setData('text/plain',c.dataset.id)});
+document.addEventListener('dragover',e=>{const c=e.target.closest('.col');if(c){e.preventDefault();c.classList.add('drop')}});
+document.addEventListener('dragleave',e=>{const c=e.target.closest('.col');if(c)c.classList.remove('drop')});
+document.addEventListener('drop',e=>{const c=e.target.closest('.col');if(!c)return;e.preventDefault();c.classList.remove('drop');setStatus(e.dataTransfer.getData('text/plain'),c.dataset.s)});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeForm();if(e.key==='Enter'&&e.target.classList?.contains('card'))openForm(tasks.find(t=>t.id===e.target.dataset.id))});
+
+function openForm(t){editing=t||null;fill($('#f-company'),companies.map(c=>({k:c.id,l:c.name})));
+  $('#formTitle').textContent=t?'Vazifani tahrirlash':'Yangi vazifa';
+  $('#f-title').value=t?.title||'';$('#f-company').value=t?.company_id||current||'';$('#f-service').value=t?.service||'Driver settlement';
+  $('#f-freq').value=t?.freq||'once';$('#f-due').value=t?.due||today;$('#f-status').value=t?.status||'todo';$('#f-note').value=t?.note||'';
+  const d=$('#delBtn');d.hidden=!t;d.textContent="O'chirish";d.dataset.armed='';$('#modal').hidden=false;$('#f-title').focus()}
+function closeForm(){$('#modal').hidden=true;editing=null}
+$('#cancelBtn').onclick=closeForm;$('#modal').addEventListener('click',e=>{if(e.target.id==='modal')closeForm()});
+$('#addBtn').onclick=()=>openForm(null);$('#backBtn').onclick=()=>{location.hash=''};
+$('#delBtn').onclick=async()=>{const b=$('#delBtn');if(!b.dataset.armed){b.dataset.armed='1';b.textContent="Ha, o'chirilsin";return}
+  const {error}=await sb.from('tasks').delete().eq('id',editing.id);if(error)return notice(error.message);closeForm();load()};
+$('#form').addEventListener('submit',async e=>{e.preventDefault();
+  const d={title:$('#f-title').value.trim(),company_id:$('#f-company').value,service:$('#f-service').value,freq:$('#f-freq').value,due:$('#f-due').value||null,status:$('#f-status').value,note:$('#f-note').value.trim()};
+  if(!d.title)return;const r=editing?await sb.from('tasks').update(d).eq('id',editing.id):await sb.from('tasks').insert(d);
+  if(r.error)return notice('Saqlanmadi: '+r.error.message);closeForm();load()});
+
+$('#loginView').addEventListener('submit',async e=>{e.preventDefault();$('#loginErr').textContent='';$('#loginBtn').disabled=true;
+  const {error}=await sb.auth.signInWithPassword({email:$('#email').value.trim(),password:$('#password').value});
+  $('#loginBtn').disabled=false;if(error)$('#loginErr').textContent='Email yoki parol noto\'g\'ri.'});
+$('#logoutBtn').onclick=()=>sb.auth.signOut();
+sb.auth.onAuthStateChange((_ev,session)=>{const on=!!session;$('#loginView').hidden=on;$('#appView').hidden=!on;
+  if(on)load();else{companies=[];tasks=[];$('#home').innerHTML='';$('#board').innerHTML='';$('#acct').innerHTML=''}});
+</script>
+</body>
+</html>
