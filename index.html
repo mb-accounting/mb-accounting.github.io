@@ -100,6 +100,31 @@ select.st[data-v="done"]{background:color-mix(in srgb,var(--green) 18%,transpare
 .icon{background:none;border:1px solid var(--line);border-radius:7px;padding:4px 10px;cursor:pointer;color:var(--ink);font-weight:600}
 .empty{padding:28px;text-align:center;color:var(--muted)}
 
+/* view switch: Vazifalar | Buyruqlar */
+.views{display:flex;gap:0;border-bottom:2px solid var(--line)}
+.vbtn{border:0;background:none;padding:10px 18px;margin-bottom:-2px;border-bottom:3px solid transparent;cursor:pointer;font:700 14.5px var(--display);color:var(--muted)}
+.vbtn[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--blue)}
+.vbtn .n{font:500 11.5px var(--mono);margin-left:6px;opacity:.75}
+.pane{display:flex;flex-direction:column;gap:14px}
+
+/* commands */
+.cmds{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px}
+@media (max-width:420px){.cmds{grid-template-columns:1fr}}
+.cmd{background:var(--surface);border:1px solid var(--line);border-radius:12px;display:flex;flex-direction:column;overflow:hidden}
+.cmd-h{display:flex;align-items:flex-start;gap:12px;padding:14px 16px 10px}
+.cmd-h .ix{flex:none;width:30px;height:30px;border-radius:8px;background:var(--navy);color:#fff;display:grid;place-items:center;font:700 13px var(--mono)}
+.cmd-h h3{margin:3px 0 0;font:700 16px/1.3 var(--display)}
+.cmd ol{margin:0 0 14px;padding:0 16px 0 46px;display:flex;flex-direction:column;gap:6px;counter-reset:s;list-style:none}
+.cmd ol li{position:relative;line-height:1.45;overflow-wrap:anywhere}
+.cmd ol li::before{counter-increment:s;content:counter(s);position:absolute;left:-30px;top:1px;width:20px;height:20px;border-radius:50%;background:color-mix(in srgb,var(--blue) 16%,transparent);color:var(--blue-ink);font:700 11px var(--mono);display:grid;place-items:center}
+.cmd .cnote{margin:0 16px 14px;padding:8px 10px;border-left:3px solid var(--amber);background:color-mix(in srgb,var(--amber) 9%,transparent);font-size:13px;color:var(--ink);border-radius:0 6px 6px 0;white-space:pre-wrap}
+.cmd-f{display:flex;gap:8px;padding:14px 16px;margin-top:auto;border-top:1px solid var(--line)}
+.cmd-f .btn{padding:7px 14px;font-size:13px}
+.cmd-f .icon{margin-left:auto}
+.btn.ok{background:var(--green);color:#fff}
+.setup{background:var(--surface);border:1px dashed var(--line);border-radius:12px;padding:16px;color:var(--muted);display:flex;flex-direction:column;gap:8px}
+.setup b{color:var(--ink)}
+
 /* modal */
 .modal{position:fixed;inset:0;background:rgb(2 31 64/.55);display:flex;align-items:center;justify-content:center;padding:16px;z-index:20}
 .panel{background:var(--surface);border-radius:14px;padding:20px;width:min(540px,100%);display:flex;flex-direction:column;gap:12px;max-height:92vh;overflow:auto;border-top:5px solid var(--blue)}
@@ -153,8 +178,12 @@ select.st[data-v="done"]{background:color-mix(in srgb,var(--green) 18%,transpare
       <section id="coView" hidden style="display:flex;flex-direction:column;gap:16px">
         <div class="top"><div><h1 id="coName"></h1><p id="coSub"></p></div><button class="btn" type="button" id="addBtn">+ Yangi vazifa</button></div>
         <div class="info" id="info"></div>
-        <div class="tabs" role="tablist" id="tabs"></div>
-        <div class="tablewrap"><table><thead><tr><th>Vazifa</th><th>Xizmat</th><th>Muddat</th><th>Takrorlanish</th><th>Holat</th><th>Izoh</th><th></th></tr></thead><tbody id="rows"></tbody></table></div>
+        <div class="views" role="tablist" id="views"></div>
+        <div class="pane" id="tasksPane">
+          <div class="tabs" role="tablist" id="tabs"></div>
+          <div class="tablewrap"><table><thead><tr><th>Vazifa</th><th>Xizmat</th><th>Muddat</th><th>Takrorlanish</th><th>Holat</th><th>Izoh</th><th></th></tr></thead><tbody id="rows"></tbody></table></div>
+        </div>
+        <div class="pane" id="cmdPane" hidden><div class="cmds" id="cmds"></div></div>
       </section>
     </main>
   </div>
@@ -173,6 +202,18 @@ select.st[data-v="done"]{background:color-mix(in srgb,var(--green) 18%,transpare
   </form>
 </div>
 
+<div class="modal" id="cmdModal" hidden>
+  <form class="panel" id="cmdForm">
+    <h3 id="cmdFormTitle">Yangi buyruq</h3>
+    <label>Buyruq nomi<input id="c-title" required placeholder="Masalan: All Loads tayyorlash"></label>
+    <label>Qadamlar (har qatorga bittadan)<textarea id="c-steps" rows="9" placeholder="RC guruhlaridan haftalik RC'larni yig'ish&#10;All Loads fayliga kiritish&#10;..."></textarea></label>
+    <label>Eslatma<textarea id="c-note" rows="3" placeholder="Muhim qoida, ogohlantirish..."></textarea></label>
+    <label>Tartib raqami<input id="c-order" type="number" min="0" step="1"></label>
+    <div class="actions"><div><button type="button" class="btn danger" id="cmdDelBtn" hidden>O'chirish</button></div>
+      <div><button type="button" class="btn ghost" id="cmdCancelBtn">Bekor qilish</button><button type="submit" class="btn">Saqlash</button></div></div>
+  </form>
+</div>
+
 <script>
 const SUPABASE_URL='https://ghexjgkqqkwerhiupcaj.supabase.co';
 const SUPABASE_KEY='sb_publishable_GpZ-XbyPLgLZqNnU8M380Q_0DkFrPTX';
@@ -182,6 +223,8 @@ const STATUSES=[{k:'todo',l:'Rejada'},{k:'doing',l:'Jarayonda'},{k:'waiting',l:'
 const SERVICES=['Driver settlement','Bookkeeping','Payroll','Invoicing / Factoring','IFTA','Form 941','Form 2290','IRP','UCR','1099','Soliq hisobotlari','Boshqa'];
 const FREQS=[{k:'once',l:'Bir martalik'},{k:'weekly',l:'Har hafta'},{k:'biweekly',l:'Har 2 hafta'},{k:'monthly',l:'Har oy'},{k:'quarterly',l:'Har chorak'},{k:'yearly',l:'Har yil'}];
 let companies=[],tasks=[],current=null,filter='open',editing=null;
+let commands=[],cmdsMissing=false,view='tasks',cmdEditing=null;
+try{const v=localStorage.getItem('mb_view');if(v==='cmds'||v==='tasks')view=v}catch{}
 const $=s=>document.querySelector(s);
 const pad=n=>String(n).padStart(2,'0');
 const iso=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
@@ -202,8 +245,25 @@ function notice(m){const n=$('#notice');n.textContent=m;n.hidden=false;setTimeou
 async function load(){
   const [c,t]=await Promise.all([sb.from('companies').select('*').order('sort_order'),sb.from('tasks').select('*')]);
   if(c.error||t.error){notice("Ma'lumot yuklanmadi: "+(c.error||t.error).message);return}
-  companies=c.data;tasks=t.data;render();
+  companies=c.data;tasks=t.data;
+  const k=await sb.from('commands').select('*').order('sort_order');
+  if(k.error){commands=[];cmdsMissing=true}else{commands=k.data;cmdsMissing=false}
+  render();
 }
+const steps=c=>(c.steps||'').split('\n').map(s=>s.trim()).filter(Boolean);
+function cmdText(c){const s=steps(c);
+  return `${co(c.company_id).name} — ${c.title}\nHafta: ____\n\nQadamlar:\n${s.map((x,i)=>`${i+1}. ${x}`).join('\n')}${c.note?`\n\nEslatma: ${c.note}`:''}`}
+function renderCmds(list){
+  if(cmdsMissing){$('#cmds').innerHTML=`<div class="setup"><b>Buyruqlar jadvali hali yaratilmagan.</b>Supabase → SQL Editor'da <code>commands</code> jadvali uchun SQL'ni bir marta ishga tushiring, keyin sahifani yangilang.</div>`;return}
+  $('#cmds').innerHTML=list.length?list.map((c,i)=>`<article class="cmd">
+    <div class="cmd-h"><span class="ix">${pad(i+1)}</span><h3>${esc(c.title)}</h3></div>
+    ${steps(c).length?`<ol>${steps(c).map(s=>`<li>${esc(s)}</li>`).join('')}</ol>`:''}
+    ${c.note?`<div class="cnote">${esc(c.note)}</div>`:''}
+    <div class="cmd-f"><button class="btn" type="button" data-copy="${c.id}">Nusxa olish</button><button class="icon" type="button" data-cedit="${c.id}">Tahrir</button></div>
+  </article>`).join(''):`<div class="setup"><b>Bu kompaniyada hali buyruq yo'q.</b>"+ Yangi buyruq" tugmasi bilan qo'shing: masalan, All Loads yoki Statementlar tayyorlash.</div>`}
+async function copyText(t){try{await navigator.clipboard.writeText(t);return true}catch{
+  const a=document.createElement('textarea');a.value=t;a.style.position='fixed';a.style.opacity='0';document.body.appendChild(a);a.select();
+  let ok=false;try{ok=document.execCommand('copy')}catch{}a.remove();return ok}}
 function stats(id){const l=tasks.filter(t=>t.company_id===id&&open(t));return{open:l.length,over:l.filter(t=>t.due&&daysTo(t.due)<0).length}}
 function render(){
   const h=decodeURIComponent(location.hash.slice(1));current=h&&companies.some(c=>c.id===h)?h:null;
@@ -222,6 +282,11 @@ function render(){
     <label>Google akkaunt<input data-k="google" value="${esc(c.google||'')}"></label>
     <label>Telegram<input data-k="telegram" value="${esc(c.telegram||'')}"></label>
     <label class="note">Izoh<textarea rows="2" data-k="note">${esc(c.note||'')}</textarea></label>`;
+  const cl=commands.filter(x=>x.company_id===current);
+  $('#views').innerHTML=[['tasks','Vazifalar',all.filter(open).length],['cmds','Buyruqlar',cl.length]].map(([k,l,n])=>`<button class="vbtn" role="tab" type="button" data-view="${k}" aria-selected="${view===k}">${l}<span class="n">${n}</span></button>`).join('');
+  $('#tasksPane').hidden=view!=='tasks';$('#cmdPane').hidden=view!=='cmds';
+  $('#addBtn').textContent=view==='cmds'?'+ Yangi buyruq':'+ Yangi vazifa';$('#addBtn').hidden=view==='cmds'&&cmdsMissing;
+  if(view==='cmds'){renderCmds(cl);return}
   const counts={open:all.filter(open).length,done:all.length-all.filter(open).length,all:all.length};
   $('#tabs').innerHTML=[['open','Ochiq'],['done','Bajarildi'],['all','Hammasi']].map(([k,l])=>`<button class="tab" role="tab" type="button" data-f="${k}" aria-selected="${filter===k}">${l}<span class="n">${counts[k]}</span></button>`).join('');
   let list=all.filter(t=>filter==='all'||(filter==='open'?open(t):!open(t)));
@@ -250,9 +315,26 @@ document.addEventListener('click',e=>{
   const g=e.target.closest('[data-go]');if(g){location.hash=g.dataset.go;$('#side').classList.remove('open');return}
   const f=e.target.closest('[data-f]');if(f){filter=f.dataset.f;render();return}
   const ed=e.target.closest('[data-edit]');if(ed)openForm(tasks.find(t=>t.id===ed.dataset.edit));
+  const v=e.target.closest('[data-view]');if(v){view=v.dataset.view;try{localStorage.setItem('mb_view',view)}catch{}render();return}
+  const cp=e.target.closest('[data-copy]');if(cp){const c=commands.find(x=>String(x.id)===cp.dataset.copy);if(!c)return;
+    copyText(cmdText(c)).then(ok=>{cp.textContent=ok?'Nusxalandi ✓':'Nusxa olinmadi';cp.classList.toggle('ok',ok);setTimeout(()=>{cp.textContent='Nusxa olish';cp.classList.remove('ok')},1800)});return}
+  const ce=e.target.closest('[data-cedit]');if(ce)openCmd(commands.find(x=>String(x.id)===ce.dataset.cedit));
 });
+function openCmd(c){cmdEditing=c||null;
+  $('#cmdFormTitle').textContent=c?'Buyruqni tahrirlash':'Yangi buyruq';
+  $('#c-title').value=c?.title||'';$('#c-steps').value=c?.steps||'';$('#c-note').value=c?.note||'';
+  $('#c-order').value=c?.sort_order??(commands.filter(x=>x.company_id===current).length+1);
+  const d=$('#cmdDelBtn');d.hidden=!c;d.textContent="O'chirish";d.dataset.armed='';$('#cmdModal').hidden=false;$('#c-title').focus()}
+function closeCmd(){$('#cmdModal').hidden=true;cmdEditing=null}
+$('#cmdCancelBtn').onclick=closeCmd;$('#cmdModal').addEventListener('click',e=>{if(e.target.id==='cmdModal')closeCmd()});
+$('#cmdDelBtn').onclick=async()=>{const b=$('#cmdDelBtn');if(!b.dataset.armed){b.dataset.armed='1';b.textContent="Ha, o'chirilsin";return}
+  const {error}=await sb.from('commands').delete().eq('id',cmdEditing.id);if(error)return notice(error.message);closeCmd();load()};
+$('#cmdForm').addEventListener('submit',async e=>{e.preventDefault();
+  const d={title:$('#c-title').value.trim(),steps:$('#c-steps').value.trim(),note:$('#c-note').value.trim(),sort_order:Number($('#c-order').value)||0};
+  if(!d.title)return;const r=cmdEditing?await sb.from('commands').update(d).eq('id',cmdEditing.id):await sb.from('commands').insert({...d,company_id:current});
+  if(r.error)return notice('Saqlanmadi: '+r.error.message);closeCmd();load()});
 window.addEventListener('hashchange',()=>{filter='open';render();window.scrollTo(0,0)});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeForm();$('#side').classList.remove('open')}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeForm();closeCmd();$('#side').classList.remove('open')}});
 $('#menuBtn').onclick=()=>$('#side').classList.toggle('open');
 
 function openForm(t){editing=t||null;fill($('#f-company'),companies.map(c=>({k:c.id,l:c.name})));
@@ -262,7 +344,7 @@ function openForm(t){editing=t||null;fill($('#f-company'),companies.map(c=>({k:c
   const d=$('#delBtn');d.hidden=!t;d.textContent="O'chirish";d.dataset.armed='';$('#modal').hidden=false;$('#f-title').focus()}
 function closeForm(){$('#modal').hidden=true;editing=null}
 $('#cancelBtn').onclick=closeForm;$('#modal').addEventListener('click',e=>{if(e.target.id==='modal')closeForm()});
-$('#addBtn').onclick=()=>openForm(null);
+$('#addBtn').onclick=()=>view==='cmds'?openCmd(null):openForm(null);
 $('#delBtn').onclick=async()=>{const b=$('#delBtn');if(!b.dataset.armed){b.dataset.armed='1';b.textContent="Ha, o'chirilsin";return}
   const {error}=await sb.from('tasks').delete().eq('id',editing.id);if(error)return notice(error.message);closeForm();load()};
 $('#form').addEventListener('submit',async e=>{e.preventDefault();
@@ -275,7 +357,7 @@ $('#loginForm').addEventListener('submit',async e=>{e.preventDefault();$('#login
   $('#loginBtn').disabled=false;if(error)$('#loginErr').textContent="Email yoki parol noto'g'ri."});
 $('#logoutBtn').onclick=()=>sb.auth.signOut();
 sb.auth.onAuthStateChange((_ev,session)=>{const on=!!session;$('#loginView').hidden=on;$('#appView').hidden=!on;
-  if(on){$('#who').textContent=session.user.email;load()}else{companies=[];tasks=[];$('#tiles').innerHTML='';$('#rows').innerHTML='';$('#coNav').innerHTML=''}});
+  if(on){$('#who').textContent=session.user.email;load()}else{companies=[];tasks=[];commands=[];$('#tiles').innerHTML='';$('#rows').innerHTML='';$('#coNav').innerHTML=''}});
 </script>
 </body>
 </html>
